@@ -1,7 +1,21 @@
 import fitz  # PyMuPDF
 from PIL import Image
 import os
+import json
 
+# Load preferences
+def load_preferences():
+    try:
+        with open('preferences.json', 'r') as f:
+            return json.load(f)
+    except:
+        return {'pdf_directory':'', 'placeholder_path' : '', 'output_directory': ''}
+
+# Save preferences
+def save_preferences(preferences):
+    with open('preferences.json', 'w') as f:
+        json.dump(preferences, f, indent=4)
+        
 def convert_pdf_to_png(pdf_path, placeholder_path, output_folder):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)

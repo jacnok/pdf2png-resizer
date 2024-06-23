@@ -1,20 +1,36 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import pdfresizer_backend as myWorkflow  # Import the backend module
+import os
 
-# TODO: make this GUI look actually nice.
+# Load preferences on startup
+preferences = myWorkflow.load_preferences()
+
 
 def select_pdf():
-    pdf_path.set(filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf")]))
+    file_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf")], initialdir=preferences.get('pdf_directory', ''))
+    if file_path:
+        pdf_path.set(file_path)
+        preferences['pdf_directory'] = os.path.dirname(file_path)
+        preferences['pdf_file'] = file_path
     
 def select_placeholder():
-    placeholder_path.set(filedialog.askopenfilename(filetypes=[("Image files", "*.png")]))
+    file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.png")], initialdir=preferences.get('placeholder_path', ''))
+    if file_path:
+        placeholder_path.set(file_path)
+        preferences['placeholder_path'] = file_path
     
 def select_output_folder():
-    output_folder.set(filedialog.askdirectory())
+    folder_path = filedialog.askdirectory(initialdir=preferences.get('output_directory', ''))
+    if folder_path:
+        output_folder.set(folder_path)
+        preferences['output_directory'] = folder_path
     
 def run_conversion():
     try:
+        # Save the selected paths to preferences
+        myWorkflow.save_preferences(preferences)
+
         myWorkflow.convert_pdf_to_png(pdf_path.get(), placeholder_path.get(), output_folder.get())
         messagebox.showinfo("Success", "Processing complete. Images saved to:\n" + output_folder.get())
     except Exception as e:
@@ -24,9 +40,9 @@ def run_conversion():
 root = tk.Tk()
 root.title("PDF to PNG Converter")
 
-pdf_path = tk.StringVar()
-placeholder_path = tk.StringVar()
-output_folder = tk.StringVar()
+pdf_path = tk.StringVar(value=preferences.get('pdf_file', ''))
+placeholder_path = tk.StringVar(value=preferences.get('placeholder_path', ''))
+output_folder = tk.StringVar(value=preferences.get('output_directory', ''))
 
 tk.Label(root, text="Select PDF file:").grid(row=0, column=0, padx=10, pady=5)
 tk.Entry(root, textvariable=pdf_path, width=50).grid(row=0, column=1, padx=10, pady=5)
