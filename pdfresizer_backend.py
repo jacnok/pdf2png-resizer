@@ -1,8 +1,6 @@
-import fitz  # PyMuPDF
 from PIL import Image
 import os
 import json
-import pdfresizer_importer
 
 # Load preferences
 def load_preferences():
@@ -18,31 +16,49 @@ def save_preferences(preferences):
         json.dump(preferences, f, indent=4)
         
 
-def convert_images_to_png(images, placeholder_path, output_folder):
+def resize_and_center_image(image, target_size):
+    # Calculate the scaling factor
+    target_width, target_height = target_size
+    original_width, original_height = image.size
+    scaling_factor = min(target_width / original_width, target_height / original_height)
+
+    # Resize the image
+    new_width = int(original_width * scaling_factor)
+    new_height = int(original_height * scaling_factor)
+    resized_image = image.resize((new_width, new_height), Image.LANCZOS)
+
+     # Create a new image with the target size and paste the resized image
+    new_image = Image.new("RGBA", target_size, (255, 255, 255, 0))  # Transparent background
+
+    # Calculate the left position based on aspect ratio
+    left_position = 0
+    if original_width / original_height < 1.33:  # For aspect ratios narrower than 4:3
+        left_position = 20
+    paste_position = (left_position, (target_height - new_height) // 2)
+    new_image.paste(resized_image, paste_position, resized_image)
+
+    return new_image
+
+
+def process_images(images, placeholder_path, output_folder):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
+    # Load the placeholder image
+    placeholder = Image.open(placeholder_path).convert("RGBA")
+
     for index, img in enumerate(images):
-        width, height = img.size
+        # Ensure the image is in RGBA mode
+        img = img.convert("RGBA")
+
+        # Resize and center the image
+        processed_img = resize_and_center_image(img, placeholder.size)
         
-        if width != 1920 or height != 1080:
-            # taken from https://www.geeksforgeeks.org/print-colors-python-terminal/, 
-            def prRed(skk): print("\033[91m {}\033[00m".format(skk)) 
-            
-            prRed(f"Image {index+1} is not 1920x1080, but {width}x{height}")
+        # Layer the processed image on top of the placeholder
+        combined_img = Image.alpha_composite(placeholder, processed_img)
 
-        # Resize the image to 1440x810 using LANCZOS filter
-        img_resized = img.resize((1440, 810), Image.LANCZOS)
-
-        # Open the placeholder image and resize to 480x810 using LANCZOS filter
-        placeholder = Image.open(placeholder_path).resize((480, 810), Image.LANCZOS)
-
-        # Create a new image with the combined width of 1920 and height of 810
-        combined_img = Image.new("RGB", (1920, 810))
-
-        # Paste the resized image and placeholder image into the combined image
-        combined_img.paste(img_resized, (0, 0))
-        combined_img.paste(placeholder, (1440, 0))
+        # Convert to RGB mode before saving
+        combined_img = combined_img.convert("RGB")
 
         # Save the combined image
         output_path = os.path.join(output_folder, f"slide_{index+1}.png")

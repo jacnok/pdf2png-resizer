@@ -49,7 +49,7 @@ def run_conversion():
                 images = myInput.import_images(os.path.dirname(file))
             
             # Convert images to PNG
-            myWorkflow.convert_images_to_png(images, placeholder_path.get(), output_folder.get())
+            myWorkflow.process_images(images, placeholder_path.get(), output_folder.get())
         
         messagebox.showinfo("Success", "Processing complete. Images saved to:\n" + output_folder.get())
     except Exception as e:
