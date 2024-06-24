@@ -1,18 +1,25 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
-import pdfresizer_backend as myWorkflow  # Import the backend module
+from PIL import Image
 import os
+import pdfresizer_backend as myWorkflow  # Import the backend module
+import pdfresizer_importer as myInput # Import the new importer module
 
 # Load preferences on startup
 preferences = myWorkflow.load_preferences()
-
+chosen_files = []
 
 def select_pdf():
-    file_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf")], initialdir=preferences.get('pdf_directory', ''))
-    if file_path:
-        pdf_path.set(file_path)
-        preferences['pdf_directory'] = os.path.dirname(file_path)
-        preferences['pdf_file'] = file_path
+    file_paths = filedialog.askopenfilenames(filetypes=[
+        ("PDF, Image files", "*.pdf *.png *.jpg *.jpeg"),
+        ("PDF files", "*.pdf"),
+        ("Image files", "*.png *.jpg *.jpeg")], initialdir=preferences.get('pdf_directory', ''))
+    if file_paths:
+        global chosen_files
+        chosen_files = list(file_paths)
+        preferences['pdf_directory'] = os.path.dirname(file_paths[0])
+        print(f"This is chosen_files: {chosen_files}")
+        # preferences['pdf_file'] = file_path
     
 def select_placeholder():
     file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.png")], initialdir=preferences.get('placeholder_path', ''))
@@ -31,21 +38,35 @@ def run_conversion():
         # Save the selected paths to preferences
         myWorkflow.save_preferences(preferences)
 
-        myWorkflow.convert_pdf_to_png(pdf_path.get(), placeholder_path.get(), output_folder.get())
+        # Process each selected file or folder
+        for file in chosen_files:
+            print(f"Processing file: {file}")  # Debugging line
+            if file.endswith(".pdf"):
+                images = myInput.import_pdf(file)
+            elif file.endswith((".png", ".jpg", ".jpeg")):
+                images = [Image.open(file)]
+            else:
+                images = myInput.import_images(os.path.dirname(file))
+            
+            # Convert images to PNG
+            myWorkflow.convert_images_to_png(images, placeholder_path.get(), output_folder.get())
+        
         messagebox.showinfo("Success", "Processing complete. Images saved to:\n" + output_folder.get())
     except Exception as e:
         messagebox.showerror("Error", str(e))
 
 # GUI setup
 root = tk.Tk()
-root.title("PDF to PNG Converter")
+root.title("PDF+ to PNG Converter")
 
-pdf_path = tk.StringVar(value=preferences.get('pdf_file', ''))
+
+selected_files = tk.StringVar(value=preferences.get('pdf_file', ''))
+# pdf_path = tk.StringVar(value=preferences.get('pdf_file', ''))
 placeholder_path = tk.StringVar(value=preferences.get('placeholder_path', ''))
 output_folder = tk.StringVar(value=preferences.get('output_directory', ''))
 
-tk.Label(root, text="Select PDF file:").grid(row=0, column=0, padx=10, pady=5)
-tk.Entry(root, textvariable=pdf_path, width=50).grid(row=0, column=1, padx=10, pady=5)
+tk.Label(root, text="Select file:").grid(row=0, column=0, padx=10, pady=5)
+tk.Entry(root, textvariable=selected_files, width=50).grid(row=0, column=1, padx=10, pady=5)
 tk.Button(root, text="Browse", command=select_pdf).grid(row=0, column=2, padx=10, pady=5)
 
 tk.Label(root, text="Select Placeholder Image:").grid(row=1, column=0, padx=10, pady=5)
