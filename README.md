@@ -3,10 +3,17 @@ This should resize any 1920x1080px .pdf file (or all .pngs and .jpg/jpegs in a f
 into a 1920x810px set of pngs, and add a "watermark".
 
 ### Dependencies
-`pip install PyMuPDF Pillow`
-(or: `pip3 install PyMuPDF Pillow`)
+`pip install python-pptx PyMuPDF moviepy pillow`
+(or: `pip install python-pptx PyMuPDF moviepy pillow`)
 
 **requires:**
 - PyMuPDF
 - Pillow
 - tkinter
+- moviepy
+- python-pptx
+- libreoffice
+    - installs based on platform:
+        - Win (PS): `choco install libreoffice --confirm`
+        - Mac (Homebrew): `brew install libreoffice`
+        - Linux/Debian: `sudo apt-get install libreoffice`

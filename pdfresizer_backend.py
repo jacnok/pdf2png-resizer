@@ -32,8 +32,12 @@ def resize_and_center_image(image, target_size):
 
     # Calculate the left position based on aspect ratio
     left_position = 0
-    if original_width / original_height < 1.33:  # For aspect ratios narrower than 4:3
-        left_position = 20
+    if original_width / original_height <= 0.75:  # For aspect ratios narrower than 3:4
+        left_position = 300
+    elif original_width / original_height <= 1:  # For aspect ratios narrower than 1:1
+        left_position = 400
+    elif original_width / original_height < 1.33:  # For aspect ratios narrower than 4:3
+        left_position = 40
     paste_position = (left_position, (target_height - new_height) // 2)
     new_image.paste(resized_image, paste_position, resized_image)
 
@@ -64,6 +68,6 @@ def process_images(images, placeholder_path, output_folder):
         output_path = os.path.join(output_folder, f"slide_{index+1}.png")
         combined_img.save(output_path)
 
-        print(f"Processed image {index+1}/{len(images)}")
+        print(f"Processed slide {index+1}/{len(images)}")
 
-    print("Processing complete. Images saved to:", output_folder)
+    print("\nProcessing complete. Images saved to:", output_folder)

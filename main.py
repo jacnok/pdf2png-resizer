@@ -11,15 +11,21 @@ chosen_files = []
 
 def select_pdf():
     file_paths = filedialog.askopenfilenames(filetypes=[
-        ("PDF, Image files", "*.pdf *.png *.jpg *.jpeg"),
+        ("PDF, PPTX, Image files", "*.pdf *.pptx *.png *.jpg *.jpeg"),
+        ("PowerPoint (PPTX) files", "*.pptx"),
         ("PDF files", "*.pdf"),
         ("Image files", "*.png *.jpg *.jpeg")], initialdir=preferences.get('pdf_directory', ''))
     if file_paths:
         global chosen_files
         chosen_files = list(file_paths)
         preferences['pdf_directory'] = os.path.dirname(file_paths[0])
-        print(f"This is chosen_files: {chosen_files}")
-        # preferences['pdf_file'] = file_path
+        # if (len(chosen_files) > 1):   # this code works for a single-line display, showing off the chosen_files.
+        #     files_display.set('; '.join(chosen_files))
+        # else:
+        #     files_display.set(chosen_files[0])
+        files_display.config(height=len(chosen_files))
+        files_display.delete('1.0', tk.END)
+        files_display.insert(tk.END, "\n".join(chosen_files))
     
 def select_placeholder():
     file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.png")], initialdir=preferences.get('placeholder_path', ''))
@@ -35,21 +41,33 @@ def select_output_folder():
     
 def run_conversion():
     try:
+        images = []
+        
         # Save the selected paths to preferences
         myWorkflow.save_preferences(preferences)
 
         # Process each selected file or folder
         for file in chosen_files:
             print(f"Processing file: {file}")  # Debugging line
+            
             if file.endswith(".pdf"):
                 images = myInput.import_pdf(file)
-            elif file.endswith((".png", ".jpg", ".jpeg")):
-                images = [Image.open(file)]
+                
+            elif file.endswith(".pptx"):
+                
+                images, media_files = myInput.import_pptx(file, output_folder.get())
+                
+                # do additional processing for video and audio media
+                myWorkflow.process_media_files(media_files, output_folder.get())
+                
+            elif file.endswith((".png", ".jpg", ".jpeg")) and (len(chosen_files) > 1):
+                images.append(Image.open(file)) # might actually allow for selective files 
+                
             else:
                 images = myInput.import_images(os.path.dirname(file))
             
-            # Convert images to PNG
-            myWorkflow.process_images(images, placeholder_path.get(), output_folder.get())
+        # Convert images to PNG, and will run even on a .pptx file
+        myWorkflow.process_images(images, placeholder_path.get(), output_folder.get())
         
         messagebox.showinfo("Success", "Processing complete. Images saved to:\n" + output_folder.get())
     except Exception as e:
@@ -65,14 +83,13 @@ fg_color = '#F7F3EE'
 
 root.configure(background=bg_color)
 
-
-selected_files = tk.StringVar(value=preferences.get('pdf_file', ''))
-# pdf_path = tk.StringVar(value=preferences.get('pdf_file', ''))
+files_display = tk.Text(root, height=1, width=100)  # Text widget to display selected files
+selected_files = tk.StringVar(value=preferences.get('input_file', ''))
 placeholder_path = tk.StringVar(value=preferences.get('placeholder_path', ''))
 output_folder = tk.StringVar(value=preferences.get('output_directory', ''))
 
 tk.Label(root, text="Select file:", bg=bg_color, fg=fg_color).grid(row=0, column=0, padx=10, pady=5)
-tk.Entry(root, textvariable=selected_files, width=100, justify=tk.RIGHT).grid(row=0, column=1, padx=10, pady=5)
+files_display.grid(row=0, column=1, padx=10, pady=5)
 tk.Button(root, text="Browse", command=select_pdf).grid(row=0, column=2, padx=10, pady=5)
 
 tk.Label(root, text="Select Placeholder Image:",bg=bg_color, fg=fg_color).grid(row=1, column=0, padx=10, pady=5)
