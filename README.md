@@ -4,7 +4,7 @@ into a 1920x810px set of pngs, and add a "watermark".
 
 ### Dependencies
 `pip install python-pptx PyMuPDF moviepy pillow`
-(or: `pip install python-pptx PyMuPDF moviepy pillow`)
+(or: `pip3 install python-pptx PyMuPDF moviepy pillow`)
 
 **requires:**
 - PyMuPDF
