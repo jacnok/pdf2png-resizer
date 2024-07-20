@@ -33,7 +33,7 @@ def resize_and_center_image(image, target_size):
     # Calculate the left position based on aspect ratio
     left_position = 0
     if original_width / original_height <= 0.75:  # For aspect ratios narrower than 3:4
-        left_position = 300
+        left_position = 275
     elif original_width / original_height <= 1:  # For aspect ratios narrower than 1:1
         left_position = 400
     elif original_width / original_height < 1.33:  # For aspect ratios narrower than 4:3
