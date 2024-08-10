@@ -57,8 +57,8 @@ def run_conversion():
                 
                 images, media_files = myInput.import_pptx(file, output_folder.get())
                 
-                # do additional processing for video and audio media
-                myWorkflow.process_media_files(media_files, output_folder.get())
+                # TODO: do additional processing for video and audio media
+                # myWorkflow.process_media_files(media_files, output_folder.get())
                 
             elif file.endswith((".png", ".jpg", ".jpeg")) and (len(chosen_files) > 1):
                 images.append(Image.open(file)) # might actually allow for selective files 
